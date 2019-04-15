@@ -28,26 +28,29 @@
           Sign in
         </el-button>
       </el-form-item>
+      <div class="tips">
+        <span style="margin-right:20px;">username: admin</span>
+        <span> password: admin</span>
+      </div>
     </el-form>
   </div>
 </template>
 
 <script>
-// import { isvalidUsername } from '@/utils/validate'
+import { isvalidUsername } from '@/utils/validate'
 
 export default {
   name: 'Login',
   data() {
     const validateUsername = (rule, value, callback) => {
-      // if (!isvalidUsername(value)) {
-      //   callback(new Error('请输入正确的用户名'))
-      // } else {
-      //   callback()
-      // }
-      callback()
+      if (!isvalidUsername(value)) {
+        callback(new Error('请输入正确的用户名'))
+      } else {
+        callback()
+      }
     }
     const validatePass = (rule, value, callback) => {
-      if (value.length < 1) {
+      if (value.length < 5) {
         callback(new Error('密码不能小于5位'))
       } else {
         callback()
@@ -55,8 +58,8 @@ export default {
     }
     return {
       loginForm: {
-        username: '',
-        password: ''
+        username: 'admin',
+        password: 'admin'
       },
       loginRules: {
         username: [{ required: true, trigger: 'blur', validator: validateUsername }],
@@ -90,10 +93,11 @@ export default {
           this.$store.dispatch('Login', this.loginForm).then(() => {
             this.loading = false
             this.$router.push({ path: this.redirect || '/' })
-          }).catch((error) => {
+          }).catch(() => {
             this.loading = false
-            this.$message.error(error)
           })
+          // this.loading = false
+          // this.$router.push({ path: this.redirect || '/' })
         } else {
           console.log('error submit!!')
           return false

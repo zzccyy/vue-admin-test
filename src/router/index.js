@@ -27,26 +27,69 @@ export const constantRouterMap = [
   { path: '/404', component: () => import('@/views/404'), hidden: true },
 
   {
-    path: '/',
-    component: Layout,
-    redirect: '/dashboard',
-    name: 'Dashboard',
-    hidden: true,
-    children: [{
-      path: 'dashboard',
-      component: () => import('@/views/dashboard/index')
-    }]
-  },
-
-  {
     path: '/form',
     component: Layout,
+    redirect: '/example/form',
+    name: 'form',
+    meta: { title: 'form', icon: 'form' },
     children: [
       {
-        path: 'index',
-        name: 'Form',
-        component: () => import('@/views/form/index'),
-        meta: { title: 'Form', icon: 'form' }
+        path: 'index1',
+        name: 'Form1',
+        component: () => import('@/views/form/index1'),
+        meta: { title: 'Form1', icon: 'form' }
+      },
+      {
+        path: 'index2',
+        name: 'Form2',
+        component: () => import('@/views/form/index2'),
+        meta: { title: 'Form2', icon: 'form' }
+      }
+    ]
+  },
+  {
+    path: '/',
+    component: Layout,
+    redirect: '/home',
+    name: 'Home',
+    hidden: true,
+    children: [
+      {
+        path: 'home',
+        component: () => import('@/views/common/home')
+      }
+    ]
+  },
+  {
+    path: '/sys',
+    component: Layout,
+    redirect: '/sys',
+    name: 'sys',
+    meta: { title: '系统管理', icon: 'form' },
+    children: [
+      {
+        path: 'user',
+        name: 'user',
+        component: () => import('@/views/modules/sys/user'),
+        meta: { title: '管理员列表', icon: 'form' }
+      },
+      {
+        path: 'config',
+        name: 'config',
+        component: () => import('@/views/modules/sys/config'),
+        meta: { title: '系统配置', icon: 'form' }
+      },
+      {
+        path: 'role',
+        name: 'role',
+        component: () => import('@/views/modules/sys/role'),
+        meta: { title: '角色管理', icon: 'form' }
+      },
+      {
+        path: 'menu',
+        name: 'menu',
+        component: () => import('@/views/modules/sys/menu'),
+        meta: { title: '菜单管理', icon: 'form' }
       }
     ]
   },

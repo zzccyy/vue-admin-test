@@ -14,7 +14,8 @@ import router from './router'
 
 import '@/icons' // icon
 import '@/permission' // permission control
-
+import httpRequest from '@/utils/request'
+import { isAuth } from '@/utils'
 /**
  * This project originally used easy-mock to simulate data,
  * but its official service is very unstable,
@@ -26,6 +27,10 @@ import '@/permission' // permission control
 // import '../mock' // simulation data
 
 Vue.use(ElementUI, { locale })
+
+// 挂载全局
+Vue.prototype.$http = httpRequest // ajax请求方法
+Vue.prototype.isAuth = isAuth // 权限方法
 
 Vue.config.productionTip = false
 
