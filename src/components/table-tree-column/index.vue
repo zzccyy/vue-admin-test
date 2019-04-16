@@ -15,7 +15,8 @@ export default {
   name: 'TableTreeColumn',
   props: {
     prop: {
-      type: String
+      type: String,
+      default: ''
     },
     treeKey: {
       type: String,
