@@ -1,5 +1,5 @@
 <template>
-  <div class="green">
+  <div class="app-container">
     <p>测试结果：{{ result }}</p>
   </div>
 </template>

@@ -1,10 +1,10 @@
 <template>
-  <div class="mod-oss">
-    <el-form :inline="true" :model="dataForm">
+  <div class="app-container">
+    <el-form :inline="true" :model="listQuery">
       <el-form-item>
-        <el-button type="primary" @click="configHandle()">云存储配置</el-button>
-        <el-button type="primary" @click="uploadHandle()">上传文件</el-button>
-        <el-button :disabled="dataListSelections.length <= 0" type="danger" @click="deleteHandle()">批量删除</el-button>
+        <el-button type="primary" size="mini" @click="configHandle()">云存储配置</el-button>
+        <el-button type="primary" size="mini" @click="uploadHandle()">上传文件</el-button>
+        <el-button :disabled="dataListSelections.length <= 0" type="danger" size="mini" @click="deleteHandle()">批量删除</el-button>
       </el-form-item>
     </el-form>
     <el-table
@@ -46,14 +46,14 @@
         </template>
       </el-table-column>
     </el-table>
-    <el-pagination
-      :current-page="pageIndex"
-      :page-sizes="[10, 20, 50, 100]"
-      :page-size="pageSize"
-      :total="totalPage"
-      layout="total, sizes, prev, pager, next, jumper"
-      @size-change="sizeChangeHandle"
-      @current-change="currentChangeHandle"/>
+    <pagination
+      v-show="total>0"
+      :total="total"
+      :page.sync="listQuery.page"
+      :limit.sync="listQuery.limit"
+      style="text-align: center;"
+      @pagination="getDataList"
+    />
     <!-- 弹窗, 云存储配置 -->
     <config v-if="configVisible" ref="config"/>
     <!-- 弹窗, 上传文件 -->
@@ -64,25 +64,28 @@
 <script>
 import Config from './oss-config'
 import Upload from './oss-upload'
+import Pagination from '@/components/Pagination'
 export default {
   components: {
     Config,
-    Upload
+    Upload,
+    Pagination
   },
   data() {
     return {
-      dataForm: {},
       dataList: [],
-      pageIndex: 1,
-      pageSize: 10,
-      totalPage: 0,
+      total: 0,
+      listQuery: {
+        page: 1,
+        limit: 10
+      },
       dataListLoading: false,
       dataListSelections: [],
       configVisible: false,
       uploadVisible: false
     }
   },
-  activated() {
+  created() {
     this.getDataList()
   },
   methods: {
@@ -93,30 +96,18 @@ export default {
         url: this.$http.adornUrl('/sys/oss/list'),
         method: 'get',
         params: this.$http.adornParams({
-          'page': this.pageIndex,
-          'limit': this.pageSize
+          'page': this.listQuery.page,
+          'limit': this.listQuery.limit
         })
       }).then(data => {
         if (data && data.code === 0) {
           this.dataList = data.page.list
-          this.totalPage = data.page.totalCount
-        } else {
-          this.dataList = []
-          this.totalPage = 0
+          this.total = data.page.totalCount
+          this.listQuery.page = data.page.currPage
+          this.listQuery.limit = data.page.pageSize
         }
         this.dataListLoading = false
       })
-    },
-    // 每页数
-    sizeChangeHandle(val) {
-      this.pageSize = val
-      this.pageIndex = 1
-      this.getDataList()
-    },
-    // 当前页
-    currentChangeHandle(val) {
-      this.pageIndex = val
-      this.getDataList()
     },
     // 多选
     selectionChangeHandle(val) {

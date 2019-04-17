@@ -1,13 +1,13 @@
 <template>
-  <div class="mod-user">
-    <el-form :inline="true" :model="dataForm" @keyup.enter.native="getDataList()">
+  <div class="app-container">
+    <el-form :inline="true" :model="listQuery" @keyup.enter.native="getDataList()">
       <el-form-item>
-        <el-input v-model="dataForm.userName" placeholder="用户名" clearable/>
+        <el-input v-model="listQuery.userName" size="mini" placeholder="用户名" clearable/>
       </el-form-item>
       <el-form-item>
-        <el-button @click="getDataList()">查询</el-button>
-        <el-button v-if="isAuth('sys:user:save')" type="primary" @click="addOrUpdateHandle()">新增</el-button>
-        <el-button v-if="isAuth('sys:user:delete')" :disabled="dataListSelections.length <= 0" type="danger" @click="deleteHandle()">批量删除</el-button>
+        <el-button size="mini" @click="getDataList()">查询</el-button>
+        <el-button v-if="isAuth('sys:user:save')" type="primary" size="mini" @click="addOrUpdateHandle()">新增</el-button>
+        <el-button v-if="isAuth('sys:user:delete')" :disabled="dataListSelections.length <= 0" type="danger" size="mini" @click="deleteHandle()">批量删除</el-button>
       </el-form-item>
     </el-form>
     <el-table
@@ -65,19 +65,19 @@
         width="150"
         label="操作">
         <template slot-scope="scope">
-          <el-button v-if="isAuth('sys:user:update')" type="text" size="small" @click="addOrUpdateHandle(scope.row.userId)">修改</el-button>
-          <el-button v-if="isAuth('sys:user:delete')" type="text" size="small" @click="deleteHandle(scope.row.userId)">删除</el-button>
+          <el-button v-if="isAuth('sys:user:update')" type="text" size="mini" @click="addOrUpdateHandle(scope.row.userId)">修改</el-button>
+          <el-button v-if="isAuth('sys:user:delete')" type="text" size="mini" @click="deleteHandle(scope.row.userId)">删除</el-button>
         </template>
       </el-table-column>
     </el-table>
-    <el-pagination
-      :current-page="pageIndex"
-      :page-sizes="[10, 20, 50, 100]"
-      :page-size="pageSize"
-      :total="totalPage"
-      layout="total, sizes, prev, pager, next, jumper"
-      @size-change="sizeChangeHandle"
-      @current-change="currentChangeHandle"/>
+    <pagination
+      v-show="total>0"
+      :total="total"
+      :page.sync="listQuery.page"
+      :limit.sync="listQuery.limit"
+      style="text-align: center;"
+      @pagination="getDataList"
+    />
     <!-- 弹窗, 新增 / 修改 -->
     <add-or-update v-if="addOrUpdateVisible" ref="addOrUpdate" @refreshDataList="getDataList"/>
   </div>
@@ -85,25 +85,27 @@
 
 <script>
 import AddOrUpdate from './user-add-or-update'
+import Pagination from '@/components/Pagination'
 export default {
   components: {
-    AddOrUpdate
+    AddOrUpdate,
+    Pagination
   },
   data() {
     return {
-      dataForm: {
+      dataList: [],
+      total: 0,
+      listQuery: {
+        page: 1,
+        limit: 10,
         userName: ''
       },
-      dataList: [],
-      pageIndex: 1,
-      pageSize: 10,
-      totalPage: 0,
       dataListLoading: false,
       dataListSelections: [],
       addOrUpdateVisible: false
     }
   },
-  activated() {
+  created() {
     this.getDataList()
   },
   methods: {
@@ -114,17 +116,16 @@ export default {
         url: this.$http.adornUrl('/sys/user/list'),
         method: 'get',
         params: this.$http.adornParams({
-          'page': this.pageIndex,
-          'limit': this.pageSize,
-          'username': this.dataForm.userName
+          'page': this.listQuery.page,
+          'limit': this.listQuery.limit,
+          'username': this.listQuery.userName
         })
       }).then(data => {
         if (data && data.code === 0) {
           this.dataList = data.page.list
-          this.totalPage = data.page.totalCount
-        } else {
-          this.dataList = []
-          this.totalPage = 0
+          this.total = data.page.totalCount
+          this.listQuery.page = data.page.currPage
+          this.listQuery.limit = data.page.pageSize
         }
         this.dataListLoading = false
       })

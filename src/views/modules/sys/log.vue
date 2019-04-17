@@ -1,11 +1,11 @@
 <template>
-  <div class="mod-log">
-    <el-form :inline="true" :model="dataForm" @keyup.enter.native="getDataList()">
+  <div class="app-container">
+    <el-form :inline="true" :model="listQuery" @keyup.enter.native="getDataList()">
       <el-form-item>
-        <el-input v-model="dataForm.key" placeholder="用户名／用户操作" clearable/>
+        <el-input v-model="listQuery.key" size="mini" placeholder="用户名／用户操作" clearable/>
       </el-form-item>
       <el-form-item>
-        <el-button @click="getDataList()">查询</el-button>
+        <el-button size="mini" @click="getDataList()">查询</el-button>
       </el-form-item>
     </el-form>
     <el-table
@@ -61,28 +61,32 @@
         width="180"
         label="创建时间"/>
     </el-table>
-    <el-pagination
-      :current-page="pageIndex"
-      :page-sizes="[10, 20, 50, 100]"
-      :page-size="pageSize"
-      :total="totalPage"
-      layout="total, sizes, prev, pager, next, jumper"
-      @size-change="sizeChangeHandle"
-      @current-change="currentChangeHandle"/>
+    <pagination
+      v-show="total>0"
+      :total="total"
+      :page.sync="listQuery.page"
+      :limit.sync="listQuery.limit"
+      style="text-align: center;"
+      @pagination="getDataList"
+    />
   </div>
 </template>
 
 <script>
+import Pagination from '@/components/Pagination'
 export default {
+  components: {
+    Pagination
+  },
   data() {
     return {
-      dataForm: {
+      dataList: [],
+      total: 0,
+      listQuery: {
+        page: 1,
+        limit: 10,
         key: ''
       },
-      dataList: [],
-      pageIndex: 1,
-      pageSize: 10,
-      totalPage: 0,
       dataListLoading: false,
       selectionDataList: []
     }
@@ -98,31 +102,19 @@ export default {
         url: this.$http.adornUrl('/sys/log/list'),
         method: 'get',
         params: this.$http.adornParams({
-          'page': this.pageIndex,
-          'limit': this.pageSize,
-          'key': this.dataForm.key
+          'page': this.listQuery.page,
+          'limit': this.listQuery.limit,
+          'key': this.listQuery.key
         })
       }).then(data => {
         if (data && data.code === 0) {
           this.dataList = data.page.list
-          this.totalPage = data.page.totalCount
-        } else {
-          this.dataList = []
-          this.totalPage = 0
+          this.total = data.page.totalCount
+          this.listQuery.page = data.page.currPage
+          this.listQuery.limit = data.page.pageSize
         }
         this.dataListLoading = false
       })
-    },
-    // 每页数
-    sizeChangeHandle(val) {
-      this.pageSize = val
-      this.pageIndex = 1
-      this.getDataList()
-    },
-    // 当前页
-    currentChangeHandle(val) {
-      this.pageIndex = val
-      this.getDataList()
     }
   }
 }

@@ -1,17 +1,17 @@
 <template>
-  <div class="mod-schedule">
-    <el-form :inline="true" :model="dataForm" @keyup.enter.native="getDataList()">
+  <div class="app-container">
+    <el-form :inline="true" :model="listQuery" @keyup.enter.native="getDataList()">
       <el-form-item>
-        <el-input v-model="dataForm.beanName" placeholder="bean名称" clearable/>
+        <el-input v-model="listQuery.beanName" placeholder="bean名称" size="mini" clearable/>
       </el-form-item>
       <el-form-item>
-        <el-button @click="getDataList()">查询</el-button>
-        <el-button v-if="isAuth('sys:schedule:save')" type="primary" @click="addOrUpdateHandle()">新增</el-button>
-        <el-button v-if="isAuth('sys:schedule:delete')" :disabled="dataListSelections.length <= 0" type="danger" @click="deleteHandle()">批量删除</el-button>
-        <el-button v-if="isAuth('sys:schedule:pause')" :disabled="dataListSelections.length <= 0" type="danger" @click="pauseHandle()">批量暂停</el-button>
-        <el-button v-if="isAuth('sys:schedule:resume')" :disabled="dataListSelections.length <= 0" type="danger" @click="resumeHandle()">批量恢复</el-button>
-        <el-button v-if="isAuth('sys:schedule:run')" :disabled="dataListSelections.length <= 0" type="danger" @click="runHandle()">批量立即执行</el-button>
-        <el-button v-if="isAuth('sys:schedule:log')" type="success" @click="logHandle()">日志列表</el-button>
+        <el-button size="mini" @click="getDataList()">查询</el-button>
+        <el-button v-if="isAuth('sys:schedule:save')" type="primary" size="mini" @click="addOrUpdateHandle()">新增</el-button>
+        <el-button v-if="isAuth('sys:schedule:delete')" :disabled="dataListSelections.length <= 0" type="danger" size="mini" @click="deleteHandle()">批量删除</el-button>
+        <el-button v-if="isAuth('sys:schedule:pause')" :disabled="dataListSelections.length <= 0" type="danger" size="mini" @click="pauseHandle()">批量暂停</el-button>
+        <el-button v-if="isAuth('sys:schedule:resume')" :disabled="dataListSelections.length <= 0" type="danger" size="mini" @click="resumeHandle()">批量恢复</el-button>
+        <el-button v-if="isAuth('sys:schedule:run')" :disabled="dataListSelections.length <= 0" type="danger" size="mini" @click="runHandle()">批量立即执行</el-button>
+        <el-button v-if="isAuth('sys:schedule:log')" type="success" size="mini" @click="logHandle()">日志列表</el-button>
       </el-form-item>
     </el-form>
     <el-table
@@ -76,14 +76,14 @@
         </template>
       </el-table-column>
     </el-table>
-    <el-pagination
-      :current-page="pageIndex"
-      :page-sizes="[10, 20, 50, 100]"
-      :page-size="pageSize"
-      :total="totalPage"
-      layout="total, sizes, prev, pager, next, jumper"
-      @size-change="sizeChangeHandle"
-      @current-change="currentChangeHandle"/>
+    <pagination
+      v-show="total>0"
+      :total="total"
+      :page.sync="listQuery.page"
+      :limit.sync="listQuery.limit"
+      style="text-align: center;"
+      @pagination="getDataList"
+    />
     <!-- 弹窗, 新增 / 修改 -->
     <add-or-update v-if="addOrUpdateVisible" ref="addOrUpdate" @refreshDataList="getDataList"/>
     <!-- 弹窗, 日志列表 -->
@@ -94,27 +94,29 @@
 <script>
 import AddOrUpdate from './schedule-add-or-update'
 import Log from './schedule-log'
+import Pagination from '@/components/Pagination'
 export default {
   components: {
     AddOrUpdate,
-    Log
+    Log,
+    Pagination
   },
   data() {
     return {
-      dataForm: {
+      dataList: [],
+      total: 0,
+      listQuery: {
+        page: 1,
+        limit: 10,
         beanName: ''
       },
-      dataList: [],
-      pageIndex: 1,
-      pageSize: 10,
-      totalPage: 0,
       dataListLoading: false,
       dataListSelections: [],
       addOrUpdateVisible: false,
       logVisible: false
     }
   },
-  activated() {
+  created() {
     this.getDataList()
   },
   methods: {
@@ -125,31 +127,19 @@ export default {
         url: this.$http.adornUrl('/sys/schedule/list'),
         method: 'get',
         params: this.$http.adornParams({
-          'page': this.pageIndex,
-          'limit': this.pageSize,
-          'beanName': this.dataForm.beanName
+          'page': this.listQuery.page,
+          'limit': this.listQuery.limit,
+          'beanName': this.listQuery.beanName
         })
       }).then(data => {
         if (data && data.code === 0) {
           this.dataList = data.page.list
-          this.totalPage = data.page.totalCount
-        } else {
-          this.dataList = []
-          this.totalPage = 0
+          this.total = data.page.totalCount
+          this.listQuery.page = data.page.currPage
+          this.listQuery.limit = data.page.pageSize
         }
         this.dataListLoading = false
       })
-    },
-    // 每页数
-    sizeChangeHandle(val) {
-      this.pageSize = val
-      this.pageIndex = 1
-      this.getDataList()
-    },
-    // 当前页
-    currentChangeHandle(val) {
-      this.pageIndex = val
-      this.getDataList()
     },
     // 多选
     selectionChangeHandle(val) {

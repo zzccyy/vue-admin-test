@@ -1,13 +1,13 @@
 <template>
-  <div class="mod-role">
-    <el-form :inline="true" :model="dataForm" @keyup.enter.native="getDataList()">
+  <div class="app-container">
+    <el-form :inline="true" :model="listQuery" @keyup.enter.native="getDataList()">
       <el-form-item>
-        <el-input v-model="dataForm.roleName" placeholder="角色名称" clearable/>
+        <el-input v-model="listQuery.roleName" size="mini" placeholder="角色名称" clearable/>
       </el-form-item>
       <el-form-item>
-        <el-button @click="getDataList()">查询</el-button>
-        <el-button v-if="isAuth('sys:role:save')" type="primary" @click="addOrUpdateHandle()">新增</el-button>
-        <el-button v-if="isAuth('sys:role:delete')" :disabled="dataListSelections.length <= 0" type="danger" @click="deleteHandle()">批量删除</el-button>
+        <el-button size="mini" @click="getDataList()">查询</el-button>
+        <el-button v-if="isAuth('sys:role:save')" type="primary" size="mini" @click="addOrUpdateHandle()">新增</el-button>
+        <el-button v-if="isAuth('sys:role:delete')" :disabled="dataListSelections.length <= 0" type="danger" size="mini" @click="deleteHandle()">批量删除</el-button>
       </el-form-item>
     </el-form>
     <el-table
@@ -50,19 +50,19 @@
         width="150"
         label="操作">
         <template slot-scope="scope">
-          <el-button v-if="isAuth('sys:role:update')" type="text" size="small" @click="addOrUpdateHandle(scope.row.roleId)">修改</el-button>
-          <el-button v-if="isAuth('sys:role:delete')" type="text" size="small" @click="deleteHandle(scope.row.roleId)">删除</el-button>
+          <el-button v-if="isAuth('sys:role:update')" type="text" size="mini" @click="addOrUpdateHandle(scope.row.roleId)">修改</el-button>
+          <el-button v-if="isAuth('sys:role:delete')" type="text" size="mini" @click="deleteHandle(scope.row.roleId)">删除</el-button>
         </template>
       </el-table-column>
     </el-table>
-    <el-pagination
-      :current-page="pageIndex"
-      :page-sizes="[10, 20, 50, 100]"
-      :page-size="pageSize"
-      :total="totalPage"
-      layout="total, sizes, prev, pager, next, jumper"
-      @size-change="sizeChangeHandle"
-      @current-change="currentChangeHandle"/>
+    <pagination
+      v-show="total>0"
+      :total="total"
+      :page.sync="listQuery.page"
+      :limit.sync="listQuery.limit"
+      style="text-align: center;"
+      @pagination="getDataList"
+    />
     <!-- 弹窗, 新增 / 修改 -->
     <add-or-update v-if="addOrUpdateVisible" ref="addOrUpdate" @refreshDataList="getDataList"/>
   </div>
@@ -70,25 +70,27 @@
 
 <script>
 import AddOrUpdate from './role-add-or-update'
+import Pagination from '@/components/Pagination'
 export default {
   components: {
-    AddOrUpdate
+    AddOrUpdate,
+    Pagination
   },
   data() {
     return {
-      dataForm: {
+      dataList: [],
+      total: 0,
+      listQuery: {
+        page: 1,
+        limit: 10,
         roleName: ''
       },
-      dataList: [],
-      pageIndex: 1,
-      pageSize: 10,
-      totalPage: 0,
       dataListLoading: false,
       dataListSelections: [],
       addOrUpdateVisible: false
     }
   },
-  activated() {
+  created() {
     this.getDataList()
   },
   methods: {
@@ -99,31 +101,19 @@ export default {
         url: this.$http.adornUrl('/sys/role/list'),
         method: 'get',
         params: this.$http.adornParams({
-          'page': this.pageIndex,
-          'limit': this.pageSize,
-          'roleName': this.dataForm.roleName
+          'page': this.listQuery.page,
+          'limit': this.listQuery.limit,
+          'roleName': this.listQuery.roleName
         })
       }).then(data => {
         if (data && data.code === 0) {
           this.dataList = data.page.list
-          this.totalPage = data.page.totalCount
-        } else {
-          this.dataList = []
-          this.totalPage = 0
+          this.total = data.page.totalCount
+          this.listQuery.page = data.page.currPage
+          this.listQuery.limit = data.page.pageSize
         }
         this.dataListLoading = false
       })
-    },
-    // 每页数
-    sizeChangeHandle(val) {
-      this.pageSize = val
-      this.pageIndex = 1
-      this.getDataList()
-    },
-    // 当前页
-    currentChangeHandle(val) {
-      this.pageIndex = val
-      this.getDataList()
     },
     // 多选
     selectionChangeHandle(val) {
