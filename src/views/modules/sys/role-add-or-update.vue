@@ -59,6 +59,7 @@ export default {
         method: 'get',
         params: this.$http.adornParams()
       }).then(data => {
+        console.log('test')
         this.menuList = treeDataTranslate(data, 'menuId')
       }).then(() => {
         this.visible = true
